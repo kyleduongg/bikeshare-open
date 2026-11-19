@@ -82,7 +82,10 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 def feature_columns(df: pd.DataFrame) -> list[str]:
     """Numeric columns that are safe to feed the model."""
     numeric = df.select_dtypes(include="number").columns
-    return [c for c in numeric if c not in FORBIDDEN]
+    return [
+        c for c in numeric
+        if c not in FORBIDDEN and c != "cnt_lag_2"
+    ]
 
 
 if __name__ == "__main__":

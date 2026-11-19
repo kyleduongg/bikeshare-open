@@ -84,7 +84,7 @@ def feature_columns(df: pd.DataFrame) -> list[str]:
     numeric = df.select_dtypes(include="number").columns
     return [
         c for c in numeric
-        if (c not in FORBIDDEN or c == "casual") and c != "cnt_lag_2"
+        if c not in FORBIDDEN and c != "cnt_lag_2"
     ]
 
 

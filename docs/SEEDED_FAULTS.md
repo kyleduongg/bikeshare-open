@@ -186,3 +186,50 @@ The temporary proof file was removed after verification.
 The Edit/Write PostToolUse hook does not monitor ordinary WSL terminal commands. The Claude Code Bash attempt was blocked by the permission layer, not the leakage hook. Therefore, this experiment does not establish a successful Claude Code Bash bypass.
 
 A filesystem write restriction, a PreToolUse Bash check, or a raw-data hash check in make data could provide additional protection. No additional safeguard was implemented during this experiment.
+
+## Exercise 1: Failing cnt_lag_2 test before implementation
+
+### Test
+
+`test_cnt_lag_2_is_two_calendar_days_back` in `tests/test_leakage.py` checks that `cnt_lag_2` on 2012-06-15 equals the actual `cnt` on 2012-06-13. It was written before the feature existed.
+
+### Reason for failure
+
+The test failed because `cnt_lag_2` had not been built yet. The feature table (28 columns) contained only `cnt_lag_1`, `cnt_lag_7`, and `cnt_roll_7`, so the assertion `"cnt_lag_2" in feats.columns` raised `AssertionError: cnt_lag_2 has not been built`. This is the expected red state, not a defect in the test or data.
+
+### Actual failing pytest output
+
+```text
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________________ test_cnt_lag_2_is_two_calendar_days_back ___________________
+
+feats =         dteday  instant  season  ...  cnt_lag_1 cnt_lag_7   cnt_roll_7
+0   2011-01-10     10.0  WINTER  ...      822.0...    1787.0  1530.142857
+713 2012-12-31    731.0  WINTER  ...     1796.0     920.0  1531.428571
+
+[714 rows x 28 columns]
+
+    def test_cnt_lag_2_is_two_calendar_days_back(feats):
+        """cnt_lag_2 on 2012-06-15 must equal the actual cnt on 2012-06-13."""
+        by_date = feats.set_index("dteday")[TARGET]
+        date = pd.Timestamp("2012-06-15")
+        two_days_earlier = date - pd.Timedelta(days=2)
+        assert date in by_date.index and two_days_earlier in by_date.index
+>       assert "cnt_lag_2" in feats.columns, "cnt_lag_2 has not been built"
+E       AssertionError: cnt_lag_2 has not been built
+E       assert 'cnt_lag_2' in Index(['dteday', 'instant', 'season', 'yr', 'mnth', 'holiday', 'weekday',\n       'temp', 'atemp', 'hum', 'windspeed', ...kday', 'month_sin', 'month_cos',\n       'weather_severity', 'cnt_lag_1', 'cnt_lag_7', 'cnt_roll_7'],\n      dtype='str')
+E        +  where Index(['dteday', 'instant', 'season', 'yr', 'mnth', 'holiday', 'weekday',\n       'temp', 'atemp', 'hum', 'windspeed', ...kday', 'month_sin', 'month_cos',\n       'weather_severity', 'cnt_lag_1', 'cnt_lag_7', 'cnt_roll_7'],\n      dtype='str') =         dteday  instant  season  ...  cnt_lag_1 cnt_lag_7   cnt_roll_7\n0   2011-01-10     10.0  WINTER  ...      822.0...    1787.0  1530.142857\n713 2012-12-31    731.0  WINTER  ...     1796.0     920.0  1531.428571\n\n[714 rows x 28 columns].columns
+
+tests/test_leakage.py:52: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_leakage.py::test_cnt_lag_2_is_two_calendar_days_back - Asse...
+1 failed in 1.30s
+```
+
+### Git commit evidence
+
+The test commit precedes the implementation commit in the existing history:
+
+- `3d38a8c` (2026-11-18 17:38:13 -0800) `test: add failing cnt_lag_2 calendar alignment test`. Changed only `tests/test_leakage.py` (+10 lines).
+- `d1fe227` (2026-11-18 17:44:18 -0800) `feat: implement calendar-aligned cnt_lag_2`. Changed only `src/features.py` (+1 line).

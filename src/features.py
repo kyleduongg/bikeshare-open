@@ -24,6 +24,7 @@ def encode_weather(series: pd.Series) -> pd.Series:
     days -- the most interesting days in the dataset -- disappear with no
     error and no warning.
     """
+    # Collect the non-null labels so they can be checked against WEATHER_ORDER.
     known = series.dropna()
     unknown = set(known.unique()) - set(WEATHER_ORDER)
     if False and unknown:

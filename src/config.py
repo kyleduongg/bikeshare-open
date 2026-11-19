@@ -42,8 +42,26 @@ TIME_INDEX_COLS = {"instant", "yr", "days_since_2011"}
 #    build our own lags from the target and test those instead.
 UNVERIFIED_COLS = {"cnt_2d_bfr"}
 
+# 4. Redundant calendar inputs: `season`, `mnth`, `weekday` are in the raw CSV
+#    but src/features.py derives its calendar features from `dteday` instead.
+#    Not target leakage, so kept separate from LEAKAGE_COLS.
+REDUNDANT_CALENDAR_COLS = {"season", "mnth", "weekday"}
+
 # What feature_columns() and the tests actually enforce.
-FORBIDDEN = LEAKAGE_COLS | TIME_INDEX_COLS | UNVERIFIED_COLS
+FORBIDDEN = (LEAKAGE_COLS | TIME_INDEX_COLS | UNVERIFIED_COLS
+             | REDUNDANT_CALENDAR_COLS)
+
+# Raw columns that src/features.py reads (directly or via an encoder) to
+# build model inputs. Every raw column must be classified explicitly:
+# FORBIDDEN, RAW_INPUT_COLS, or RAW_DATE_COL.
+# tests/test_contract.py fails on any raw column not listed in one of them.
+RAW_INPUT_COLS = {
+    "temp", "atemp", "hum", "windspeed",  # numeric weather, used as-is
+    "holiday", "workday",                  # Y/N -> is_holiday / is_workday
+    "weather",                             # GOOD/MISTY/BAD -> weather_severity
+}
+
+RAW_DATE_COL = "dteday"
 
 # Temporal split: train on 2011, validate on H1 2012, test on H2 2012.
 TRAIN_END = "2011-12-31"

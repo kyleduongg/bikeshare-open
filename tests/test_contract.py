@@ -64,3 +64,41 @@ def test_weather_encoder_rejects_unknown_labels():
     from src.features import encode_weather
     with pytest.raises(ValueError, match="unmapped weather labels"):
         encode_weather(pd.Series(["GOOD", "UNEXPECTED"]))
+
+
+def _unclassified_raw_columns(columns):
+    from src.config import FORBIDDEN, RAW_DATE_COL, RAW_INPUT_COLS
+    known = FORBIDDEN | RAW_INPUT_COLS | {RAW_DATE_COL}
+    return sorted(set(columns) - known)
+
+
+def test_every_raw_column_is_explicitly_classified():
+    """A new raw column must be classified in src/config.py before it can
+    flow anywhere near the model; it is never accepted silently."""
+    from src.config import RAW
+    header = pd.read_csv(RAW, nrows=0).columns
+    assert not _unclassified_raw_columns(header), (
+        f"unclassified raw columns: {_unclassified_raw_columns(header)}; "
+        "classify them in src/config.py"
+    )
+
+
+def test_column_classification_detects_unknown_column(tmp_path):
+    """Self-check on a copy of the CSV: the real file is never modified."""
+    from src.config import RAW
+    copy = tmp_path / "bike_daily.csv"
+    df = pd.read_csv(RAW, nrows=5)
+    df["synthetic_new_col"] = 1
+    df.to_csv(copy, index=False)
+    assert _unclassified_raw_columns(pd.read_csv(copy, nrows=0).columns) == [
+        "synthetic_new_col"
+    ]
+
+
+def test_column_classes_do_not_overlap():
+    from src.config import (FORBIDDEN, LEAKAGE_COLS, RAW_DATE_COL,
+                            RAW_INPUT_COLS, REDUNDANT_CALENDAR_COLS)
+    assert not FORBIDDEN & RAW_INPUT_COLS
+    assert RAW_DATE_COL not in FORBIDDEN | RAW_INPUT_COLS
+    assert REDUNDANT_CALENDAR_COLS <= FORBIDDEN
+    assert not REDUNDANT_CALENDAR_COLS & LEAKAGE_COLS

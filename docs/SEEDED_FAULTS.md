@@ -10,7 +10,7 @@ Detection: The PostToolUse hook reported a failed leakage test.
 
 Repair: Restored the exclusion condition. All 15 tests passed.
 
-Agent repair turns: To be confirmed.
+Agent repair turns: 1
 
 ### Actual failing pytest output
 
@@ -129,7 +129,7 @@ Additional verification: Added test_weather_encoder_guard_survives to tests/test
 
 Repair: Restored if unknown: and removed the temporary comment. All 17 tests passed.
 
-Agent repair turns: Pending confirmation from Claude repair session.
+Agent repair turns: 1
 
 ### Actual failing pytest output
 

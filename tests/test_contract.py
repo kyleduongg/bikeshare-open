@@ -56,3 +56,11 @@ def test_persistence_baseline_is_reported():
     """The baseline that matters for a lag-driven model is 'yesterday again'.
     It must be in the comparison, whatever its score."""
     assert "baseline_persistence" in MODELS
+
+
+def test_weather_encoder_rejects_unknown_labels():
+    import pandas as pd
+    import pytest
+    from src.features import encode_weather
+    with pytest.raises(ValueError, match="unmapped weather labels"):
+        encode_weather(pd.Series(["GOOD", "UNEXPECTED"]))

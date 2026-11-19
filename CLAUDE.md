@@ -24,6 +24,13 @@ rides) from calendar, weather, and lagged-demand features.
   count) alongside every model. A negative R^2 is a finding, not a bug
   to hide.
 
+## Custom skills
+- `/seed-fault <fault>` is the custom fault-injection skill
+  (`.claude/skills/seed-fault`). It seeds one fault in `src/` after your
+  approval, records hook and pytest evidence, restores the code, and
+  verifies `make test` recovers. It never edits `tests/`, `data/raw/**`,
+  or hooks, and never commits. Evidence goes in `docs/SEEDED_FAULTS.md`.
+
 ## Style
 - Standard library, pandas, scikit-learn only. No new dependencies
   without asking. Versions are pinned in `requirements.txt`.

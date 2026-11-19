@@ -233,3 +233,22 @@ The test commit precedes the implementation commit in the existing history:
 
 - `3d38a8c` (2026-11-18 17:38:13 -0800) `test: add failing cnt_lag_2 calendar alignment test`. Changed only `tests/test_leakage.py` (+10 lines).
 - `d1fe227` (2026-11-18 17:44:18 -0800) `feat: implement calendar-aligned cnt_lag_2`. Changed only `src/features.py` (+1 line).
+
+## Custom skill demonstration: `/seed-fault use casual as a feature`
+
+This section records an actual run of the custom `/seed-fault` skill (`.claude/skills/seed-fault`).
+
+- **Invocation:** `/seed-fault use casual as a feature`.
+- **Baseline:** `make test` passed (20 passed) before any change.
+- **Approval:** the user approved removing `casual` from `LEAKAGE_COLS` in `src/config.py` (line 28):
+  - Original: `LEAKAGE_COLS = {"casual", "registered", "cnt"}`
+  - Faulty: `LEAKAGE_COLS = {"registered", "cnt"}`
+- **PostToolUse hook:** returned no output for the fault edit (and none for the restore edit).
+- **Detection:** `test_every_raw_column_is_explicitly_classified` (`tests/test_contract.py:80`) failed with `AssertionError: unclassified raw columns: ['casual']; classify them in src/config.py`.
+- **pytest summary:** `1 failed, 5 passed` (run with `-x`, so it stopped at the first failure).
+- **Restore:** Claude restored the original definition in 1 repair attempt (a single Edit). `git diff src/config.py` was empty afterwards.
+- **Recovery:** `make test` then passed all 20 tests (`20 passed`), matching the baseline; `git status --short` showed only the pre-existing untracked `experiments/`.
+
+### Why the hook missed this fault
+
+`.claude/hooks/check_leakage.sh` re-runs only `tests/test_leakage.py` when a `src/*.py` file is edited. This fault was caught by `tests/test_contract.py`, which the hook does not run, so the hook returned no output even though the fault broke the suite. The hook's test coverage is narrower than the full suite; only the later explicit pytest run exposed the failure.

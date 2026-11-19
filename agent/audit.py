@@ -11,7 +11,7 @@ row per repo you can put in a dataframe. Same reviewer, different harness.
 The SDK drives the same Claude Code binary the tutorial uses, so it reads
 the same endpoint settings: with Ollama running locally and
 .claude/settings.json pointing at it, no API key is needed. The model
-comes from AUDIT_MODEL (default: the local `bikeshare-coder` build).
+comes from AUDIT_MODEL (default: the local `sonnet` build).
 To run against a hosted model instead, set ANTHROPIC_BASE_URL /
 ANTHROPIC_AUTH_TOKEN and AUDIT_MODEL in the environment.
 """
@@ -158,7 +158,7 @@ async def audit_repo(repo: Path) -> dict[str, Any]:
         # but has no Edit or Write to grant.
         permission_mode="default",
         max_turns=40,
-        model=os.environ.get("AUDIT_MODEL", "bikeshare-coder"),
+        model=os.environ.get("AUDIT_MODEL", "sonnet"),
         output_format={"type": "json_schema", "schema": REPORT_SCHEMA},
     )
 
